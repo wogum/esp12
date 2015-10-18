@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>Temperature Logger</title>
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" />
+ <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$(document).ready( function() {
+  $("#ret").click(function() { $(location).attr("href","/"); } );
+  $.getJSON("/cfg", function(data) {
+    $("#ssid").val(data.ssid);
+    $("#pwd").val(data.pwd);
+    $("#host").val(data.host);
+    $("#uri").val(data.uri);
+    $("#ntp").val(data.ntpserver);
+    $("#rec").val(data.rec);
+    $("#tz").val(data.tz);
+    if(data.slp) $("#slp").attr("selected","selected");
+    });
+});
+</script> 
+</head>
+<body>
+<div class="container">
+ <h3>NodeMCU Temperature Monitor</h3>
+ <form method="post" action="?" class="form-horizontal" role="form">
+  <div class="form-group">
+   <label for="ssid" class="col-sm-4 control-label">WiFi Network SSID:</label>
+   <div class="col-sm-8">
+    <input type="text" name="ssid" id="ssid" value="" class="form-control" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="pwd" class="col-sm-4 control-label">WiFi Network Password:</label>
+   <div class="col-sm-8">
+    <input type="password" name="pwd" id="pwd" value="" class="form-control" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="host" class="col-sm-4 control-label">Monitoring station address:</label>
+   <div class="col-sm-8">
+    <input type="text" name="host" id="host" value="" class="form-control" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="uri" class="col-sm-4 control-label">Monitoring station script:</label>
+   <div class="col-sm-8">
+    <input type="text" name="uri" id="uri" value="" class="form-control" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="ntpserver" class="col-sm-4 control-label">NTP server address:</label>
+   <div class="col-sm-8">
+    <input type="text" name="ntp" id="ntp" value="" class="form-control" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="rec" class="col-sm-4 control-label">Record interval in minutes:</label>
+   <div class="col-sm-8">
+    <select name="rec" id="rec" class="form-control">
+     <option value="2">2 min</option>
+     <option value="3">3 min</option>
+     <option value="4">4 min</option>
+     <option value="5">5 min</option>
+     <option value="6">6 min</option>
+     <option value="10">10 min</option>
+     <option value="12">12 min</option>
+     <option value="15">15 min</option>
+     <option value="20">20 min</option>
+     <option value="30">30 min</option>
+     <option value="60">60 min</option>
+    </select>
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="slp" class="col-sm-4 control-label">Sleep after each record:</label>
+   <div class="col-sm-8">
+    <input type="checkbox" name="slp" id="slp" value="1" class="" />
+   </div>
+  </div>
+  <div class="form-group">
+   <label for="tz" class="col-sm-4 control-label">Timezone in hours:</label>
+   <div class="col-sm-8">
+    <input type="number" name="tz" id="tz" value="" min="-12" max="12" class="form-control" />
+   </div>
+  </div>
+  <button type="submit" id="submit" class="btn btn-primary">Save configuration</button>
+  <button type="button" id="ret" class="btn btn-default">Cancel</button>
+ </form>
+
+</div><!--container-->
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>Temperature Logger</title>
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+ <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.22.5/js/jquery.tablesorter.min.js"></script>
+ <script type="text/javascript">
+function getShortHistory() {
+    $("#dshist").hide();
+    var gtab = [];
+    $.get("/ee", function(data) {
+	$("table#dshist tbody").html("");
+	gtab = [ ['Time', 'T', 'P', 'H'] ]
+	var b = atob(data);
+	var y,m,d,h,n,s,t1,t2,t3;
+	for(var i=0; i<b.length; i+=8) 
+	    if(b.charCodeAt(i+0) != 0xFF) { 
+		y = 2000+(b.charCodeAt(i+0) >> 1);
+		m = ((b.charCodeAt(i+0) & 0x01) << 3) + (b.charCodeAt(i+1) >> 5);
+		d = b.charCodeAt(i+1) & 0x1F;
+		h = b.charCodeAt(i+2) >> 3;
+		n = ((b.charCodeAt(i+2) & 0x07) << 3) + (b.charCodeAt(i+3) >> 5);
+		s = (b.charCodeAt(i+3) & 0x1F) << 1;
+		t1 = 16 * b.charCodeAt(i+4) + (b.charCodeAt(i+5) >> 4);
+		if(t1>2047) t1 -= 4096;
+		t1 /= 10;
+		t2 = 256 * (b.charCodeAt(i+5) & 0x0F) + b.charCodeAt(i+6);
+		if(t2>2047) t2 -= 4096;
+		if(t2<=850) t2 /= 10;
+		t3 = b.charCodeAt(i+7);
+		if(t3>127) t3 -= 256;
+		var dt = y.toString() + '-' + (m<10?'0':'') + m.toString() + '-' + (d<10?'0':'') + d.toString();
+		var tm = (h<10?'0':'') + h.toString() + ':' + (n<10?'0':'') + n.toString() + ':' + (s<10?'0':'') + s.toString();
+		$("table#dshist tbody").append('<tr><td>'+dt+' '+tm+'</td><td>'+t1.toString()+'</td><td>'+t2.toString()+'</td><td>'+t3.toString()+'</td></tr>');
+		gtab.push( [ dt.substr(5,5)+' '+tm.substr(0,5), t1, t2, t3 ] );
+		}
+	$("#gchart").height("400px");
+	var options = { title:'Temperature', series:{0:{color:'red'},1:{targetAxisIndex:1,color:'green'},2:{targetAxisIndex:2,color:'blue'}},
+	 vAxes:{0:{title:'Temperature C'},1:{title:'Pressure hPa',minValue:980,maxValue:1020},2:{title:'Humidity %',minValue:0,maxValue:100}} };
+	var gdata = google.visualization.arrayToDataTable( gtab );
+	var chart = new google.visualization.LineChart(document.getElementById('gchart'));
+	chart.draw(gdata, options);
+	$("table.tablesorter").tablesorter();
+	});
+}
+function getTemp() {
+    $.getJSON("/json", function(data) {
+	$("#dstime").text(data.date+' '+data.time);
+	$("#dstemp").html('<b>'+(Math.round(data.t[0]/100)/10)+'</b>');
+	$("#dsds").text(data.a[0]);
+	for(var i=1; i<data.t.length; i++) {
+	    $("#dstemp").append('<br /><b>'+(Math.round(data.t[i]/100)/10)+'</b>');
+	    $("#dsds").append('<br />'+data.a[i]);
+	    }
+	$("#dsnode").html(data.node+'<br />'+data.mac);
+	$("#dsmem").text(data.mem);
+	$("#dsdisk").text(data.disk + ' (' + (data.disk/8) + ')');
+	$("#dsuptime").text(data.uptime);
+	$("#dsver").text(data.ver);
+	$("#dstime").fadeOut().fadeIn();
+	});
+}
+$(document).ready( function() {
+    $("#tlog").click( function() { $("#dshist").toggle(); });
+    $("#tshort").click(getShortHistory);
+    $("#tnow").click(getTemp);
+    $("#conf").click( function() { $(location).attr("href","/config"); } );
+    setTimeout(getTemp, 100);
+    setTimeout(getShortHistory, 200);
+});
+</script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+google.load("visualization","1",{packages:["corechart"]});
+</script>
+<style type="text/css"><!--//
+.tablesorter .tablesorter-header {
+  border: solid 1px darkgray;
+  background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==);
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
+  padding-right: 16px;
+}
+.tablesorter .tablesorter-headerAsc {
+  background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7);
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
+  padding-right: 16px;
+}
+.tablesorter .tablesorter-headerDesc {
+  background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
+  background-repeat: no-repeat;
+  background-position: center right;
+  cursor: pointer;
+  padding-right: 16px;
+}
+//-->
+</style>
+</head>
+<body>
+<div class="container">
+ <h3>NodeMCU Temperature Monitor</h3>
+ <table id="dsnow" class="table table-condensed table-striped table-bordered">
+  <tbody>
+   <tr><td>Date & Time</td><td id="dstime"></td></tr>
+   <tr><td>Values - Temperature</td><td id="dstemp"></td></tr>
+   <tr><td>Device - Thermometer</td><td id="dsds"></td></tr>
+   <tr><td>NodeMCU</td><td id="dsnode"></td></tr>
+   <tr><td>Mem Free</td><td id="dsmem"></td></tr>
+   <tr><td>Disk Free</td><td id="dsdisk"></td></tr>
+   <tr><td>Uptime</td><td id="dsuptime"></td></tr>
+   <tr><td>Software version</td><td id="dsver"></td></tr>
+  </tbody>
+ </table>
+ <hr />
+ <div id="gchart" style="width:100%; height:10px;"></div>
+ <button id="tlog" class="btn btn-primary pull-left">Show/Hide Log</button>
+ <button id="tnow" class="btn btn-default pull-left">Get current data</button>
+ <button id="tshort" class="btn btn-default pull-left">Get history log</button>
+ <button id="conf" class="btn btn-default pull-right">Configuration</button>
+ <hr />
+ <table id="dshist" class="table table-condensed table-striped table-bordered tablesorter text-center">
+  <thead>
+   <tr class="bg-info"><th>Date and Time</th><th>T</th><th>P</th><th>H</th></tr>
+  </thead>
+  <tbody>
+  </tbody>
+ </table>
+ <hr />
+ <p class="text-muted"><small>&copy;2015 WG</small></p>
+</div>
+</body>
+</html>
